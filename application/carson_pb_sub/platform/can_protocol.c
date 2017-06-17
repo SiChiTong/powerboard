@@ -13,6 +13,8 @@
 #include "Debug.h"
 //#include "UltraSonic.h"
 
+#include "fifo.h"
+
 #include "led_ctrl.h"
 
 
@@ -36,13 +38,10 @@ uint8_t hwVersion[] = HW_VERSION;
 CAN_TXDATA_STRUCT  CommandProcessing( uint32_t func_ID, uint8_t* dstPtr, uint8_t* pdata, uint32_t len );
 //CAN_TXDATA_STRUCT FirmwareUpgrade(uint32_t ID,uint8_t* pdata,uint32_t len);
 
-/***************************ID HANDLE BEGIN*****************************************************/
-/**
-  * @brief  
-  * @param   
-  * @retval 
-	* @RevisionHistory
-  */
+can_fifo_t can_fifo_ram;
+can_fifo_t *can_fifo = &can_fifo_ram;
+
+can_pkg_t can_pkg[CAN_FIFO_SIZE] = {0};
 
  
 typedef void (*CallBackFunc)(void);
@@ -131,18 +130,15 @@ void CanTX(mico_can_t can_type, uint32_t CANx_ID,uint8_t* pdata,uint16_t len)
 	//if(roundCount <= 1)
     if(t_len <= 7)
     {
-        //if((roundCount == 0) || ((roundCount == 1) && (modCount == 0)))
+        TxMsg.CanData_Struct.SegPolo = ONLYONCE;
+        TxMessage.DLC = t_len+1;		
+        
+        memcpy(&TxMessage.Data[1],pdata,t_len);
+        if((CAN_USED->TSR&0x1C000000))
         {
-            TxMsg.CanData_Struct.SegPolo = ONLYONCE;
-            TxMessage.DLC = t_len+1;		
-            
-            memcpy(&TxMessage.Data[1],pdata,t_len);
-            if((CAN_USED->TSR&0x1C000000))
-            {
-                MicoCanMessageSend(MICO_CAN1, &TxMessage);//
-            }
-            return ;
+            MicoCanMessageSend(MICO_CAN1, &TxMessage);//
         }
+        return ;
     }
     
 	//if( roundCount >= 1)
@@ -937,6 +933,9 @@ void CanLongBufInit(void)
     can_long_frame_buf->FreeBuf = FreeBuf;
     
     //my_id = GetCanMacId();//test 
+    
+    
+    FifoInit(can_fifo, can_pkg, CAN_FIFO_SIZE);
 }
 
 #define CAN_LONG_FRAME_TIME_OUT     5000/SYSTICK_PERIOD

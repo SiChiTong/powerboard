@@ -76,7 +76,7 @@ typedef enum
 
 #define ADC_FACTOR_1    50
 #define ADC_FACTOR_2    5
-const struct convert_adc_data convert_data[] = {
+struct convert_adc_data convert_data[] = {
   [CURRENTS_5V_RIGHT_HAND] = 
   {
     .adc_type           = ADC_C_5V_RIGHT_HAND_MOTOR,
@@ -568,7 +568,7 @@ static uint16_t processChannelsData( adc_channel_t type )
   {
      if( pConvertAdcData->err_start_time == 0 )
      {
-       pConvertAdcData->err_start_time = (uint16_t)os_get_time();
+       pConvertAdcData->err_start_time = os_get_time();
      }
      else
      {

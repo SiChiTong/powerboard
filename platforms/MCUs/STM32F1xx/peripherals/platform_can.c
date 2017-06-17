@@ -187,7 +187,8 @@ OSStatus platform_can_send_message( const platform_can_driver_t* can, const CanT
   //memcpy(can->handle->pTxMsg->Data, msg->Data, msg->DLC);
   memcpy(can->handle->pTxMsg, msg, sizeof(CanTxMsgTypeDef));
   
-  require_action_quiet( HAL_CAN_Transmit( can->handle, 0x10 ) == HAL_OK, exit, err = kGeneralErr );
+  //require_action_quiet( HAL_CAN_Transmit( can->handle, 0x10 ) == HAL_OK, exit, err = kGeneralErr );
+  require_action_quiet( HAL_CAN_Transmit( can->handle, 0 ) == HAL_OK, exit, err = kGeneralErr );
   
 exit:
     return err; 
@@ -216,6 +217,7 @@ void platform_can_rx_irq( platform_can_driver_t* can_driver )
     HAL_CAN_IRQHandler( can_driver->handle );
   }
   can_driver->rx_complete = 1;
+  can_protocol_period();
 }
 
 //CanRxMsgTypeDef RxMessage;

@@ -4,6 +4,7 @@
 */
 
 #ifndef __CAN_PROTOOCOL_H
+#define __CAN_PROTOOCOL_H
 
 #include "mico.h"
 
@@ -28,6 +29,12 @@
 #define SOURCE_ID_TRANSMIT_UPDATE       0x11
 #define SOURCE_ID_CHECK_TRANSMIT        0x12
 
+
+
+#define CAN_FIFO_SIZE                   100
+
+
+
 typedef union
 {
 	 struct{
@@ -49,94 +56,9 @@ typedef struct
 	uint8_t *pdata;
 }CAN_TXDATA_STRUCT;
 
-typedef struct {
-	uint32_t ID;
-	uint32_t TimeStamp;
-	uint8_t TimeFlag;
-	uint8_t SendType;
-	uint8_t RemoteFlag;
-	uint8_t ExternFlag;
-	uint8_t DataLen;
-	uint8_t Data[8];
-	uint8_t Reserved[3];
 
-} CM_CAN_T;
 
-typedef struct {
-	uint32_t AccCode;
-	uint32_t AccMask;
-	uint32_t Filter;
-	uint32_t Bundrate;
-	uint8_t Mode;
-	
-} CM_CAN_CONFIG_T;
 
-typedef enum 
-{
-	 FrameTypeBit = 28,
-	 SrcIdBit = 27,
-	 DestIdBit = 16,
-	 AckBit_U = 15,
-	/*固件升级MASK*/
-	 ResendFlagBit_U= 14,
-         SegmentNumBit_U = 13,
-	/*控制指令MASK*/
-	 PropertyBit_D = 14,
-	 FuncIdBit_D = 7,
-	 SegmentNumBit_D = 3,
-	 AckBit_D = 2,
-	 EndFlagBit_D = 1,
-	 ResendFlagBit_D = 0,
-} CM_CAN_ID_BIT;	
-
-typedef enum 
-{
-	 FrameTypeMask = 0x10000000,
-	 SrcIdMask = 0x0fc00000,
-	 DestIdMask = 0x003f0000,
-	 AckMask_U = 0x00008000,
-	/*固件升级MASK*/
-	 ResendFlagMask_U= 0x00004000,
-	 SegmentNumMask_U = 0x00003fff,
-	/*控制指令MASK*/
-	 PropertyMask_D = 0x0000c000,
-	 FuncIdMask_D = 0x00003f80,
-	 SegmentNumMask_D = 0x00000078,
-	 AckMask_D = 0x00000004,
-	 EndFlagMask_D = 0x00000002,
-	 ResendFlagMask_D = 0x00000001,
-} CM_CAN_ID_MASK;
-#if 0
-
-typedef struct
-{
-	uint32_t ID;
-	uint8_t FrameMode;
-	uint8_t FrameType;
-	uint8_t DataLen;
-	uint8_t Data[8];	
-}CM_CAN_FRAME_T;
-
-typedef struct 
-{
-	uint32_t Ack;
-	uint32_t ResendFlag;
-	uint32_t SegmentNum;
-	uint32_t ID;
-} CM_CAN_ID_U_T;
-
-typedef struct 
-{
-	uint32_t Property;
-	uint32_t FuncId;
-	uint32_t SegmentNum;
-	uint32_t Ack;
-	uint32_t EndFlag;
-	uint32_t ResendFlag;
-	uint32_t ID;
-} CM_CAN_ID_D_T;
-
-#endif
 typedef union
 {
 	struct
@@ -150,7 +72,6 @@ typedef union
 	}CanID_Struct;
 	uint32_t  CANx_ID;
 }CAN_ID_UNION;
-
 
 typedef union
 {

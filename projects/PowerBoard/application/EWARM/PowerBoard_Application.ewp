@@ -5961,7 +5961,7 @@
           <state>STM32F103xE</state>
           <state>xSIZE_OPTIMIZE</state>
           <state>NO_MICO_RTOS</state>
-          <state>MICO_DISABLE_WATCHDOG</state>
+          <state>xMICO_DISABLE_WATCHDOG</state>
           <state>DEBUG=1</state>
           <state>NO_BLOCK_MENU</state>
         </option>
@@ -6831,7 +6831,7 @@
           <name>$PROJ_DIR$\..\..\..\..\application\carson_pb_sub\platform\can_protocol.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\application\carson_pb_sub\platform\can_protocol.h</name>
+          <name>$PROJ_DIR$\..\..\..\..\application\carson_pb_sub\platform\fifo.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\application\carson_pb_sub\platform\led_ctrl.c</name>

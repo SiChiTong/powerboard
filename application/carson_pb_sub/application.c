@@ -74,7 +74,7 @@ int main( void )
         PowerOnDevices(POWER_CHEST_RK);
     }
 
-#if 1
+#if 0
     BSP_Power_OnOff(POWER_ALL, POWER_ON);//PowerOn();
 #endif
 
@@ -82,7 +82,7 @@ int main( void )
     {
 #if 1
         VolDetect_Tick();
-        can_protocol_period();
+        //can_protocol_period();
         Main_Menu(); 
         Platform_Tick();
 #endif
@@ -117,6 +117,7 @@ static uint8_t    indicatorFreshCount = 0;
 USED INLINE void user_period_tick( void )
 {
     indicatorFreshCount ++;
+    platform_watchdog_kick();
     if( indicatorFreshCount > 50 )
     {
         indicatorFreshCount = 0;
