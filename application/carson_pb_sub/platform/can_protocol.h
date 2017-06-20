@@ -31,7 +31,7 @@
 
 
 
-#define CAN_FIFO_SIZE                   100
+#define CAN_FIFO_SIZE                   50
 
 
 
@@ -113,6 +113,9 @@ typedef struct
 extern uint8_t CanUpdataBuff[64];
 extern uint8_t CanRxdataBuff[64];
 #endif
+
+
+
 
 void RxMsgHandle(uint32_t ID,uint8_t* pdata);
 

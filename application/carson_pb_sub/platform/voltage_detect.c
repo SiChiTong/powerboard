@@ -685,7 +685,22 @@ static void computeVoltage( void )
 uint8_t is_need_print_adc_data = 0;
 void PrintAdcData(void)
 {
-printf("\r\n5v right hand motor currents        %d\r\n",voltageConvert->c_5V_right_hand_motor);
+      uint32_t sum_check = 0;
+      uint32_t single_num;
+      printf("\r\n");
+      //printf("battery percertage: %d%%\r\n", boardStatus->vBatLevel);//get_percentage_from_battery_voltage( voltageConvert->bat_voltage ) );
+      for( uint8_t i = 0; i < sizeof(voltageData_t)/2; i++ )
+      {
+        if( i % 10 == 0 )
+           printf("\r\n");
+        single_num = *((uint16_t *)voltageConvert + i);
+        printf( "%2d: %5d\t", i + 1, single_num );
+        sum_check += single_num;
+      }     
+      printf("\r\n");
+      vol_detect_log( "above num checksum: %d", sum_check );
+#if 0
+    printf("\r\n5v right hand motor currents    %d\r\n",voltageConvert->c_5V_right_hand_motor);
     printf("24v hd camera currents              %d\r\n",voltageConvert->c_24V_hd_camera);
     printf("24v head motor currents             %d\r\n",voltageConvert->c_24V_head_motor);
     printf("24v camera motor currents           %d\r\n",voltageConvert->c_24V_camera);
@@ -719,6 +734,7 @@ printf("\r\n5v right hand motor currents        %d\r\n",voltageConvert->c_5V_rig
     printf("5v led currents                     %d\r\n",voltageConvert->c_5V_led);
     printf("5v camera currents                  %d\r\n",voltageConvert->c_5V_camera);
     printf("5v hd camera currents               %d\r\n",voltageConvert->c_5V_hd_camera);
+#endif
 }
 
 uint32_t sendRateToTime(uint8_t sendRate)
@@ -754,6 +770,7 @@ uint32_t sendRateToTime(uint8_t sendRate)
 
 //static uint32_t lowVoltageStartTime = 0;
 static uint32_t  batteryPercentageStartTime = 0;
+static uint32_t print_start_time = 0;
 void VolDetect_Tick( void )
 {
     computeVoltage();
@@ -770,6 +787,17 @@ void VolDetect_Tick( void )
       
 #endif
     }
+#define    PRINT_ADC_PERIOD     500
+if( os_get_time() - print_start_time >= PRINT_ADC_PERIOD/SYSTICK_PERIOD )
+{
+    print_start_time = os_get_time();
+#if 1
+    if(is_need_print_adc_data == 1)
+    {
+        PrintAdcData();
+    }      
+#endif
+}
     
     if( ( YES == voltageDebug.isNeedUpload ) && IS_SEND_RATE_DATA( voltageDebug.uploadRate ) )
     {     

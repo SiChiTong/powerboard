@@ -822,7 +822,9 @@ void Main_Menu(void)
 #endif
       }
       else {
-        printf(   "\r\n8 -0: 5v right hand motor currents\r\n"
+        printf(   
+#if 0
+               "\r\n8 -0: 5v right hand motor currents\r\n"
                       "8 -1: 24v hd camera currents\r\n"
                       "8 -2: 24v head motor currents \r\n"
                       "8 -3: 24v camera motor currents\r\n"
@@ -855,7 +857,44 @@ void Main_Menu(void)
                         "8 -U: 5v reserve currents\r\n"
                         "8 -V: 5v led currents\r\n"
                         "8 -W: 5v camera currents\r\n"
-                        "8 -X: 5v hd camera currents\r\n");
+                        "8 -X: 5v hd camera currents\r\n"
+#else
+                    "\r\n8 -1: 5v right hand motor currents\r\n"
+                        "8 -2: 24v hd camera currents\r\n"
+                        "8 -3: 24v head motor currents \r\n"
+                        "8 -4: 24v camera motor currents\r\n"
+                        "8 -5: 5v keyboard currents\r\n"
+                        "8 -6: 5v code board currents\r\n"
+                        "8 -7: 5v left hand motor currents\r\n"
+                        "8 -8: 5v card reader currents\r\n"
+                        "8 -9: 5v head currents\r\n"
+                        "8 -10: 24v right hand motor currents\r\n"
+                        "8 -11: 12v head rk currents\r\n"
+                        "8 -12: 12v chest rk currents \r\n"
+                        "8 -13: 24v left hand motor currents\r\n"
+                        "8 -14: 12v audio pa currents \r\n"
+                        "8 -15: 5v repair board currents\r\n"
+                        "8 -16: 5v touch board currents \r\n"                      
+                        "8 -17: 12v switch currents\r\n"
+                        "8 -18: 12v router currents\r\n"
+                        "8 -19: vbus currents\r\n"
+                        "8 -20: 12 card reader currents\r\n"
+                        "8 -21: 12v temperature\r\n"
+                        "8 -22: 5v temperature\r\n"
+                        "8 -23: air temperature\r\n"
+                        "8 -24: 5v head touch currents \r\n"
+                        "8 -25: 12v all currents\r\n"
+                        "8 -26: 5v all currents\r\n"
+                        "8 -27: 5v head led currents\r\n"
+                        "8 -28: 12v voltage\r\n"
+                        "8 -29: 5v voltage\r\n"
+                        "8 -30: vbat voltage\r\n"
+                        "8 -31: 5v reserve currents\r\n"
+                        "8 -32: 5v led currents\r\n"
+                        "8 -33: 5v camera currents\r\n"
+                        "8 -34: 5v hd camera currents\r\n"
+#endif
+                          );
       }
       break;
     }
@@ -887,7 +926,12 @@ void Main_Menu(void)
       }
       break;
     }
-    
+    else if(strcmp(cmdname, "ADC") == 0 || strcmp(cmdname, "CC") == 0)  {
+      
+        extern uint8_t is_need_print_adc_data;
+        is_need_print_adc_data ^= 1;
+        break;
+    }
     
 #if 0
     else if( strcmp(cmdname, "IRLED") == 0 || strcmp(cmdname, "9") == 0 )

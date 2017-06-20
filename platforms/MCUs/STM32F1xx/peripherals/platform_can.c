@@ -14,6 +14,7 @@
 #include "platform_logging.h"
 
 #include "can_protocol.h"
+#include "fifo.h"
 
 typedef unsigned int    u32;
 
@@ -188,7 +189,7 @@ OSStatus platform_can_send_message( const platform_can_driver_t* can, const CanT
   memcpy(can->handle->pTxMsg, msg, sizeof(CanTxMsgTypeDef));
   
   //require_action_quiet( HAL_CAN_Transmit( can->handle, 0x10 ) == HAL_OK, exit, err = kGeneralErr );
-  require_action_quiet( HAL_CAN_Transmit( can->handle, 0 ) == HAL_OK, exit, err = kGeneralErr );
+  require_action_quiet( HAL_CAN_Transmit( can->handle, 0x10 ) == HAL_OK, exit, err = kGeneralErr );
   
 exit:
     return err; 
@@ -216,35 +217,42 @@ void platform_can_rx_irq( platform_can_driver_t* can_driver )
   {
     HAL_CAN_IRQHandler( can_driver->handle );
   }
-  can_driver->rx_complete = 1;
-  can_protocol_period();
+  //can_driver->rx_complete = 1;
 }
 
 //CanRxMsgTypeDef RxMessage;
+
 void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan)
 {
-  
-  
-  HAL_CAN_Receive_IT( hcan, CAN_FIFO0);
-//  memcpy( &RxMessage, hcan->pRxMsg, sizeof(CanRxMsgTypeDef) );
-  
+    can_pkg_t can_pkg_tmp;
+    HAL_CAN_Receive_IT( hcan, CAN_FIFO0);
+    
+#if 1
+    ///////// put CAN package into fifo
+        can_pkg_tmp.id.CANx_ID = hcan->pRxMsg->ExtId;
+        can_pkg_tmp.len = hcan->pRxMsg->DLC;
+        memcpy(can_pkg_tmp.data.CanData, hcan->pRxMsg->Data, hcan->pRxMsg->DLC);
+        FifoPutCanPkg(can_fifo, can_pkg_tmp);    
+#endif
+    
 #if 0
-  CanTxMsgTypeDef  *can_tx_msg;
-  CanRxMsgTypeDef  *can_rx_msg;
-  can_tx_msg = hcan->pTxMsg;
-  can_rx_msg = hcan->pRxMsg;
-  
-  can_tx_msg->ExtId     = can_rx_msg->ExtId;
-  can_tx_msg->IDE       = can_rx_msg->IDE;
-  can_tx_msg->RTR       = CAN_RTR_DATA;
-  can_tx_msg->DLC       = can_rx_msg->DLC;
-  
-  for( uint8_t i = 0; i < can_rx_msg->DLC; i++ )
-  {
-    can_tx_msg->Data[i] = can_rx_msg->Data[i];
-  }
-  
-  HAL_CAN_Transmit_IT( hcan );
+    memcpy( &RxMessage, hcan->pRxMsg, sizeof(CanRxMsgTypeDef) );
+    CanTxMsgTypeDef  *can_tx_msg;
+    CanRxMsgTypeDef  *can_rx_msg;
+    can_tx_msg = hcan->pTxMsg;
+    can_rx_msg = hcan->pRxMsg;
+
+    can_tx_msg->ExtId     = can_rx_msg->ExtId;
+    can_tx_msg->IDE       = can_rx_msg->IDE;
+    can_tx_msg->RTR       = CAN_RTR_DATA;
+    can_tx_msg->DLC       = can_rx_msg->DLC;
+
+    for( uint8_t i = 0; i < can_rx_msg->DLC; i++ )
+    {
+        can_tx_msg->Data[i] = can_rx_msg->Data[i];
+    }
+
+    HAL_CAN_Transmit_IT( hcan );
 #endif
 }
 

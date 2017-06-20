@@ -30,8 +30,9 @@ uint8_t CanTxdataBuff[CAN_LONG_FRAME_LENTH_MAX] = {0};
 #if 0
 uint8_t CanUpdataBuff[64];
 uint8_t CanRxdataBuff[64];
-
 #endif
+
+
 uint8_t swVersion[] = SW_VERSION;
 uint8_t hwVersion[] = HW_VERSION;
 
@@ -117,7 +118,7 @@ void CanTX(mico_can_t can_type, uint32_t CANx_ID,uint8_t* pdata,uint16_t len)
 	uint16_t t_len;
 	uint16_t roundCount;
 	uint8_t modCount;
-	CAN_DATA_UNION TxMsg;
+	CAN_DATA_UNION TxMsg = {0};
 	//CanTxMsgTypeDef *TxMessage = platform_can_drivers[can_type].handle->pTxMsg;
     
 	t_len = len;
@@ -133,7 +134,10 @@ void CanTX(mico_can_t can_type, uint32_t CANx_ID,uint8_t* pdata,uint16_t len)
         TxMsg.CanData_Struct.SegPolo = ONLYONCE;
         TxMessage.DLC = t_len+1;		
         
+        
         memcpy(&TxMessage.Data[1],pdata,t_len);
+        TxMessage.Data[0] = TxMsg.CanData[0];
+        
         if((CAN_USED->TSR&0x1C000000))
         {
             MicoCanMessageSend(MICO_CAN1, &TxMessage);//
@@ -141,53 +145,53 @@ void CanTX(mico_can_t can_type, uint32_t CANx_ID,uint8_t* pdata,uint16_t len)
         return ;
     }
     
-	//if( roundCount >= 1)
 	{
-		int Num;
-		//if( modCount == 0)
-		{
-			for(Num = 0; Num < roundCount; Num++)
-			{		
+		int num;
+        {
+            for(num = 0; num < roundCount; num++)
+            {		
         //SET SEGPOLO				
-				if( Num == 0)
-				{
-					TxMsg.CanData_Struct.SegPolo = BEGIAN;
-				}
-				else
-				{
-					TxMsg.CanData_Struct.SegPolo = TRANSING;
-				}
-				
-				if( modCount == 0 && Num == roundCount-1)
-				{
-					TxMsg.CanData_Struct.SegPolo = END;
-				}
-							
-				TxMsg.CanData_Struct.SegNum = Num;
-				memcpy(TxMsg.CanData_Struct.Data,&pdata[Num*7],7);
-				memcpy(TxMessage.Data,TxMsg.CanData,8);
-				TxMessage.DLC = 8;
-				if((CAN_USED->TSR&0x1C000000))
-				{
-					MicoCanMessageSend(MICO_CAN1, &TxMessage);//发送报文	
-				}
-				
-				//TRANSMIT LAST MSG
-				if( modCount !=0 && Num == roundCount-1 )
-				{
-					Num++;
-					TxMsg.CanData_Struct.SegPolo = END;
-					TxMsg.CanData_Struct.SegNum = Num;
-                    memcpy(TxMsg.CanData_Struct.Data,&pdata[Num*7],modCount);
+                if( num == 0)
+                {
+                    TxMsg.CanData_Struct.SegPolo = BEGIAN;
+                }
+                else
+                {
+                    TxMsg.CanData_Struct.SegPolo = TRANSING;
+                }
+                
+                if( modCount == 0 && num == roundCount-1)
+                {
+                    TxMsg.CanData_Struct.SegPolo = END;
+                }
+                            
+                TxMsg.CanData_Struct.SegNum = num;
+                memcpy(TxMsg.CanData_Struct.Data, &pdata[num*7], 7);
+                memcpy(TxMessage.Data, TxMsg.CanData, 8);
+                TxMessage.DLC = 8;
+                if((CAN_USED->TSR&0x1C000000))
+                {
+                    MicoCanMessageSend(MICO_CAN1, &TxMessage);//发送报文	
+                }
+                
+                //TRANSMIT LAST MSG
+                if( modCount !=0 && num == roundCount-1 )
+                {
+                    num++;
+                    TxMsg.CanData_Struct.SegPolo = END;
+                    TxMsg.CanData_Struct.SegNum = num;
+                    memcpy(TxMsg.CanData_Struct.Data,&pdata[num*7],modCount);
                     memcpy(TxMessage.Data,TxMsg.CanData,modCount+1);
-					TxMessage.DLC = modCount+1;
-					if((CAN_USED->TSR&0x1C000000))
-					{
-						MicoCanMessageSend(MICO_CAN1, &TxMessage);//
-					}
-				}
-			}
-		}
+                    TxMessage.DLC = modCount+1;
+                    if((CAN_USED->TSR&0x1C000000))
+                    {
+                        MicoCanMessageSend(MICO_CAN1, &TxMessage);//
+                    }
+                }
+            }
+            
+        }
+        
 	}
 }
 #if 0
@@ -934,7 +938,6 @@ void CanLongBufInit(void)
     
     //my_id = GetCanMacId();//test 
     
-    
     FifoInit(can_fifo, can_pkg, CAN_FIFO_SIZE);
 }
 
@@ -944,138 +947,139 @@ void CanLongBufInit(void)
 uint32_t can_comm_start_time;
 void can_protocol_period( void )
 {
-    
-    if( platform_can_drivers[MICO_CAN1].rx_complete == 0 )
-    {
-      return;
-    }
-    
-   
-    CAN_ID_UNION id;
-    uint16_t tx_len;
-    //uint8_t test_data[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28};
-    CAN_DATA_UNION rx_buf;
-    uint8_t buf_index;
-    uint8_t seg_polo;
-    uint8_t seg_num;
-    
-    memcpy( &RxMessage, platform_can_drivers[MICO_CAN1].handle->pRxMsg, sizeof(CanRxMsgTypeDef) );
-    memcpy(&rx_buf, RxMessage.Data, RxMessage.DLC);
-    
-    seg_polo = rx_buf.CanData_Struct.SegPolo;
-    seg_num = rx_buf.CanData_Struct.SegNum;
-    
-    if(rx_buf.CanData_Struct.SegPolo == ONLYONCE)
-    {
-        id.CANx_ID = RxMessage.ExtId;
-        //if( (id.CanID_Struct.SourceID < SOURCE_ID_PREPARE_UPDATE) && (id.CanID_Struct.SourceID > SOURCE_ID_CHECK_TRANSMIT) )
-        {
-                //process the data here//
-                tx_len = CmdProcessing(&id, rx_buf.CanData_Struct.Data, RxMessage.DLC - 1, CanTxdataBuff );
-                //process the data here//
-                
-                CanTX( MICO_CAN1, id.CANx_ID, CanTxdataBuff, tx_len );
-                //CanTX( MICO_CAN1, id.CANx_ID, test_data, sizeof(test_data) );
-        }
-    }
-    else //long frame
-    {
-        for(uint8_t i = 0; i < CAN_LONG_BUF_NUM; i++)
-        {
-            if(can_long_frame_buf->can_rcv_buf[i].used_len > 0)
-            {
-                if(os_get_time() - can_long_frame_buf->can_rcv_buf[i].start_time > CAN_LONG_FRAME_TIME_OUT)
-                {
-                    can_long_frame_buf->FreeBuf(i);
-                }
-            }     
-        }
+    if(IsFifoEmpty(can_fifo) == FALSE)
+    {  
+        CAN_ID_UNION id;
+        can_pkg_t can_pkg_tmp;
+        uint16_t tx_len;
+        //uint8_t test_data[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28};
+        CAN_DATA_UNION rx_buf;
+        uint8_t buf_index;
+        uint8_t seg_polo;
+        uint8_t seg_num;
+        uint8_t rx_data_len;
         
-        if(seg_polo == BEGIAN)
+        FifoGetCanPkg(can_fifo, &can_pkg_tmp);
+        
+        memcpy(rx_buf.CanData,  can_pkg_tmp.data.CanData, can_pkg_tmp.len);
+        id.CANx_ID = can_pkg_tmp.id.CANx_ID;
+        seg_polo = can_pkg_tmp.data.CanData_Struct.SegPolo;
+        seg_num = can_pkg_tmp.data.CanData_Struct.SegNum;
+        rx_data_len = can_pkg_tmp.len;
+        
+        if(seg_polo == ONLYONCE)
         {
-            buf_index = can_long_frame_buf->GetTheBufById(RxMessage.ExtId);
-            if(buf_index == CAN_BUF_NO_THIS_ID)
+            //if( (id.CanID_Struct.SourceID < SOURCE_ID_PREPARE_UPDATE) && (id.CanID_Struct.SourceID > SOURCE_ID_CHECK_TRANSMIT) )
             {
-                buf_index = can_long_frame_buf->GetOneFreeBuf();
+                    //process the data here//
+                    tx_len = CmdProcessing(&id, rx_buf.CanData_Struct.Data, rx_data_len - 1, CanTxdataBuff );
+                    //process the data here//
+                    
+                    CanTX( MICO_CAN1, id.CANx_ID, CanTxdataBuff, tx_len );
+                    //CanTX( MICO_CAN1, id.CANx_ID, test_data, sizeof(test_data) );
+                    //CanTX( MICO_CAN1, id.CANx_ID, rx_buf.CanData, rx_data_len );
             }
-            else
+        }
+        else //long frame
+        {
+            for(uint8_t i = 0; i < CAN_LONG_BUF_NUM; i++)
             {
-                //
+                if(can_long_frame_buf->can_rcv_buf[i].used_len > 0)
+                {
+                    if(os_get_time() - can_long_frame_buf->can_rcv_buf[i].start_time > CAN_LONG_FRAME_TIME_OUT)
+                    {
+                        can_long_frame_buf->FreeBuf(i);
+                    }
+                }     
             }
             
-            if((buf_index == CAN_LONG_BUF_FULL) || (buf_index >= CAN_LONG_BUF_NUM))
+            if(seg_polo == BEGIAN)
             {
-                CanProtocolLog("LONG FRAME RCV BUF IS FULL! ! ! !\r\n");
+                buf_index = can_long_frame_buf->GetTheBufById(id.CANx_ID);
+                if(buf_index == CAN_BUF_NO_THIS_ID)
+                {
+                    buf_index = can_long_frame_buf->GetOneFreeBuf();
+                }
+                else
+                {
+                    //
+                }
                 
-                goto exit;
+                if((buf_index == CAN_LONG_BUF_FULL) || (buf_index >= CAN_LONG_BUF_NUM))
+                {
+                    CanProtocolLog("LONG FRAME RCV BUF IS FULL! ! ! !\r\n");
+                    
+                    goto exit;
+                }
+                memcpy(&can_long_frame_buf->can_rcv_buf[buf_index].rcv_buf[0], rx_buf.CanData_Struct.Data, CAN_ONE_FRAME_DATA_LENTH);
+                can_long_frame_buf->can_rcv_buf[buf_index].used_len = CAN_ONE_FRAME_DATA_LENTH;
+                can_long_frame_buf->can_rcv_buf[buf_index].can_id = id.CANx_ID;
+                can_long_frame_buf->can_rcv_buf[buf_index].start_time = os_get_time();
+                CanProtocolLog("begin\r\n");
             }
-            memcpy(&can_long_frame_buf->can_rcv_buf[buf_index].rcv_buf[0], rx_buf.CanData_Struct.Data, CAN_ONE_FRAME_DATA_LENTH);
-            can_long_frame_buf->can_rcv_buf[buf_index].used_len = CAN_ONE_FRAME_DATA_LENTH;
-            can_long_frame_buf->can_rcv_buf[buf_index].can_id = RxMessage.ExtId;
-            can_long_frame_buf->can_rcv_buf[buf_index].start_time = os_get_time();
-            CanProtocolLog("begin\r\n");
+            else if((seg_polo == TRANSING) || (seg_polo == END))
+            {
+                buf_index = can_long_frame_buf->GetTheBufById(id.CANx_ID);
+                if((buf_index == CAN_BUF_NO_THIS_ID) || (buf_index >= CAN_LONG_BUF_NUM))
+                {
+                    CanProtocolLog("ERROR ! !\r\n long buff index is %d",buf_index);
+                    goto exit;
+                }
+                can_long_frame_buf->can_rcv_buf[buf_index].start_time = os_get_time();
+                if(seg_polo == TRANSING)
+                {
+                    memcpy(&can_long_frame_buf->can_rcv_buf[buf_index].rcv_buf[seg_num*CAN_ONE_FRAME_DATA_LENTH], rx_buf.CanData_Struct.Data, CAN_ONE_FRAME_DATA_LENTH);
+                    can_long_frame_buf->can_rcv_buf[buf_index].used_len += CAN_ONE_FRAME_DATA_LENTH;
+                    CanProtocolLog("transing\r\n");
+                }
+                if(seg_polo == END)
+                {
+                    memcpy(&can_long_frame_buf->can_rcv_buf[buf_index].rcv_buf[seg_num*CAN_ONE_FRAME_DATA_LENTH], rx_buf.CanData_Struct.Data, rx_data_len - 1);
+                    can_long_frame_buf->can_rcv_buf[buf_index].used_len += rx_data_len - 1; 
+                    
+                    //process the data here//
+                    /**********************/
+                    //process the data here//
+                    
+                    CanTX( MICO_CAN1, id.CANx_ID, can_long_frame_buf->can_rcv_buf[buf_index].rcv_buf, can_long_frame_buf->can_rcv_buf[buf_index].used_len);  // test :send the data back;             
+                    can_long_frame_buf->FreeBuf(buf_index);
+                    CanProtocolLog("end\r\n");
+                }       
+            }
         }
-        else if((seg_polo == TRANSING) || (seg_polo == END))
-        {
-            buf_index = can_long_frame_buf->GetTheBufById(RxMessage.ExtId);
-            if((buf_index == CAN_BUF_NO_THIS_ID) || (buf_index >= CAN_LONG_BUF_NUM))
-            {
-                CanProtocolLog("ERROR ! !\r\n long buff index is %d",buf_index);
-                goto exit;
-            }
-            can_long_frame_buf->can_rcv_buf[buf_index].start_time = os_get_time();
-            if(seg_polo == TRANSING)
-            {
-                memcpy(&can_long_frame_buf->can_rcv_buf[buf_index].rcv_buf[seg_num*CAN_ONE_FRAME_DATA_LENTH], rx_buf.CanData_Struct.Data, CAN_ONE_FRAME_DATA_LENTH);
-                can_long_frame_buf->can_rcv_buf[buf_index].used_len += CAN_ONE_FRAME_DATA_LENTH;
-                CanProtocolLog("transing\r\n");
-            }
-            if(seg_polo == END)
-            {
-                memcpy(&can_long_frame_buf->can_rcv_buf[buf_index].rcv_buf[seg_num*CAN_ONE_FRAME_DATA_LENTH], rx_buf.CanData_Struct.Data, RxMessage.DLC - 1);
-                can_long_frame_buf->can_rcv_buf[buf_index].used_len += RxMessage.DLC - 1; 
-                
-                //process the data here//
-                /**********************/
-                //process the data here//
-                
-                CanTX( MICO_CAN1, id.CANx_ID, can_long_frame_buf->can_rcv_buf[buf_index].rcv_buf, can_long_frame_buf->can_rcv_buf[buf_index].used_len);  // test :send the data back;             
-                can_long_frame_buf->FreeBuf(buf_index);
-                CanProtocolLog("end\r\n");
-            }       
-        }
-    }
-    
-    
+        
+        
 #if 0
-    else if( CanData.FrameType == 1 )
-    {
-        if( CanData.CanID_U.SegmentNum <= 10 )//update prepare
+        else if( CanData.FrameType == 1 )
         {
-            if( CanData.CanID_U.ID != 0 )//muti data process
+            if( CanData.CanID_U.SegmentNum <= 10 )//update prepare
             {
-                CANUpDataLen = CanData.CanID_U.SegmentNum*8;
-                memcpy( &CanUpdataBuff[CanData.CanID_U.SegmentNum*8], RxMessage.Data, RxMessage.DLC );
+                if( CanData.CanID_U.ID != 0 )//muti data process
+                {
+                    CANUpDataLen = CanData.CanID_U.SegmentNum*8;
+                    memcpy( &CanUpdataBuff[CanData.CanID_U.SegmentNum*8], RxMessage.Data, RxMessage.DLC );
+                }
+                else
+                {
+                    CANUpDataLen = CanData.CanID_U.SegmentNum*8 + RxMessage.DLC;
+                    memcpy( &CanUpdataBuff[CanData.CanID_U.SegmentNum*8], RxMessage.Data, RxMessage.DLC );				
+                    //update cmd process
+                    TxCanData = FirmwareUpgrade( CanData.CanID_U.ID, CanUpdataBuff, CANUpDataLen );
+                    CM_CAN_Tx( MICO_CAN1, CanData, TxCanData.pdata, TxCanData.len );
+                    CANUpDataLen = 0;
+                }
             }
-            else
+            else//update data package
             {
-                CANUpDataLen = CanData.CanID_U.SegmentNum*8 + RxMessage.DLC;
-                memcpy( &CanUpdataBuff[CanData.CanID_U.SegmentNum*8], RxMessage.Data, RxMessage.DLC );				
-                //update cmd process
                 TxCanData = FirmwareUpgrade( CanData.CanID_U.ID, CanUpdataBuff, CANUpDataLen );
                 CM_CAN_Tx( MICO_CAN1, CanData, TxCanData.pdata, TxCanData.len );
-                CANUpDataLen = 0;
             }
         }
-        else//update data package
-        {
-            TxCanData = FirmwareUpgrade( CanData.CanID_U.ID, CanUpdataBuff, CANUpDataLen );
-            CM_CAN_Tx( MICO_CAN1, CanData, TxCanData.pdata, TxCanData.len );
-        }
-    }
 #endif
+    }
+   
+    
 exit:    
-    platform_can_drivers[MICO_CAN1].rx_complete = 0;
     return;
 }
 

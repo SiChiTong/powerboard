@@ -648,7 +648,7 @@
           <name>$PROJ_DIR$\..\..\..\..\application\carson_pb_sub\platform\can_protocol.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\application\carson_pb_sub\platform\can_protocol.h</name>
+          <name>$PROJ_DIR$\..\..\..\..\application\carson_pb_sub\platform\fifo.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\application\carson_pb_sub\platform\led_ctrl.c</name>

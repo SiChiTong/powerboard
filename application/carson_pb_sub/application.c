@@ -70,8 +70,7 @@ int main( void )
     CanLongBufInit();
     if( !isNeedAutoBoot() )
     {
-        PowerOnDevices(POWER_HEAD_RK);
-        PowerOnDevices(POWER_CHEST_RK);
+        PowerOn();
     }
 
 #if 0
@@ -82,7 +81,7 @@ int main( void )
     {
 #if 1
         VolDetect_Tick();
-        //can_protocol_period();
+        can_protocol_period();
         Main_Menu(); 
         Platform_Tick();
 #endif
