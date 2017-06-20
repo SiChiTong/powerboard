@@ -132,14 +132,14 @@ OSStatus select_multi_channel( mico_adc_t adc )
     MicoGpioOutputHigh( (mico_gpio_t)GPIO_SWITCH_SEL3 );
     break;
   case ADC_C_5V_CAMERA:        // 13
-    MicoGpioOutputLow( (mico_gpio_t)GPIO_SWITCH_SEL0 );
+    MicoGpioOutputHigh( (mico_gpio_t)GPIO_SWITCH_SEL0 );
     MicoGpioOutputLow( (mico_gpio_t)GPIO_SWITCH_SEL1 );
     MicoGpioOutputHigh( (mico_gpio_t)GPIO_SWITCH_SEL2 );
     MicoGpioOutputHigh( (mico_gpio_t)GPIO_SWITCH_SEL3 );
     break;
   case ADC_5V_HD_CAMERA:       // 14
     MicoGpioOutputLow( (mico_gpio_t)GPIO_SWITCH_SEL0 );
-    MicoGpioOutputLow( (mico_gpio_t)GPIO_SWITCH_SEL1 );
+    MicoGpioOutputHigh( (mico_gpio_t)GPIO_SWITCH_SEL1 );
     MicoGpioOutputHigh( (mico_gpio_t)GPIO_SWITCH_SEL2 );
     MicoGpioOutputHigh( (mico_gpio_t)GPIO_SWITCH_SEL3 );
     break;
